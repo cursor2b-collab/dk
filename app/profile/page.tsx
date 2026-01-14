@@ -64,7 +64,7 @@ export default function ProfilePage() {
           />
         </div>
         <div className="profile-user-info">
-          <div className="profile-name">{userInfo?.name || '谭晓敏'}</div>
+          <div className="profile-name">{userInfo?.name || '用户'}</div>
           <div className="profile-phone">{userInfo?.phone || '未登录'}</div>
         </div>
       </div>
