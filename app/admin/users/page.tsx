@@ -178,22 +178,30 @@ export default function UsersPage() {
                   try {
                     // 读取CSV文件
                     const text = await file.text()
-                    const lines = text.split('\n').filter(line => line.trim())
+                    const lines = text.split('\n').filter((line: string) => line.trim())
                     if (lines.length < 2) {
                       alert('文件格式错误，至少需要表头和数据行')
                       return
                     }
 
                     // 解析CSV（简单解析，实际应该使用CSV解析库）
-                    const headers = lines[0].split(',').map(h => h.trim())
-                    const dataRows = lines.slice(1).map(line => {
-                      const values = line.split(',').map(v => v.trim())
-                      const row: any = {}
-                      headers.forEach((header, index) => {
-                        row[header] = values[index] || ''
-                      })
-                      return row
+                    const headers: string[] = lines[0]
+                    .split(',')
+                    .map((h: string) => h.trim())
+                  
+                  const dataRows = lines.slice(1).map((line: string) => {
+                    const values: string[] = line
+                      .split(',')
+                      .map((v: string) => v.trim())
+                  
+                    const row: Record<string, string> = {}
+                  
+                    headers.forEach((header: string, index: number) => {
+                      row[header] = values[index] ?? ''
                     })
+                  
+                    return row
+                  })
 
                     // 批量创建用户
                     let successCount = 0

@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     let query = supabase.from('system_settings').select('*')
 
     if (key) {
-      query = query.eq('setting_key', key).single()
+      query = query.eq('setting_key', key) as any
     }
 
     const { data, error } = await query

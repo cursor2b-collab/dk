@@ -188,7 +188,7 @@ export default function SettingsPage() {
                   }}
                 />
                 <p style={{ marginTop: '8px', fontSize: '12px', color: '#b0b0b0', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>
-                  用户端点击"在线客服"时将跳转到此链接
+                  用户端点击 &quot;在线客服&quot;时将跳转到此链接
                 </p>
               </div>
             </div>
