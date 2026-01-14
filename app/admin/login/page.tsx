@@ -63,10 +63,11 @@ export default function AdminLoginPage() {
       <div className="admin-bg" style={{ position: 'relative', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <aside className="inner"></aside>
         <div id="form-ui" style={{ position: 'relative', zIndex: 10000 }}>
-          <form action method="post" id="form" onSubmit={handleSubmit}>
+          {/* 修改这里：移除了 action 属性，只保留 method="post" */}
+          <form method="post" id="form" onSubmit={handleSubmit}>
             <div id="form-body">
               <div id="welcome-lines">
-                <div id="welcome-line-1">催收系统</div>
+                <div id="welcome-line-1">财务管理系统</div>
                 <div id="welcome-line-2">Welcome</div>
               </div>
               <div id="input-area">
