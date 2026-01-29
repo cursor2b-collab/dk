@@ -86,6 +86,7 @@ export async function GET(request: NextRequest) {
         status: status,
         overdueAmount: overdueAmount.toFixed(2),
         overdueDays: overdueDays,
+        amount_due: amountDue.toFixed(2), // 应还金额
         totalRepayment: totalRepayment.toFixed(2),
         is_settled: user.is_settled || false,
         is_interest_free: user.is_interest_free || false,

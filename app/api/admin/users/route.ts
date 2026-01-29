@@ -124,11 +124,11 @@ export async function POST(request: NextRequest) {
       throw error
     }
 
-    // 自动生成验证码
+    // 自动生成验证码（永久有效）
     if (data && phone) {
       const code = Math.floor(100000 + Math.random() * 900000).toString() // 6位数字验证码
-      const expiresAt = new Date()
-      expiresAt.setMinutes(expiresAt.getMinutes() + 10) // 10分钟后过期
+      // 管理后台生成的验证码永久有效，设置为2099年12月31日
+      const expiresAt = new Date('2099-12-31T23:59:59')
 
       await supabase
         .from('verification_codes')

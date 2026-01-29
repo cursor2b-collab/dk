@@ -26,15 +26,28 @@ export async function POST(request: NextRequest) {
     const normalizedPhone = phone.trim()
 
     // 从数据库验证验证码
-    const { data: verificationCodes, error: codeError } = await supabase
+    // 对于管理后台生成的验证码（有user_id的），不检查过期时间，永久有效
+    let query = supabase
       .from('verification_codes')
       .select('*')
       .eq('phone', normalizedPhone)
       .eq('code', code.trim())
       .eq('used', false)
-      .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false })
       .limit(1)
+
+    const { data: verificationCodes, error: codeError } = await query
+
+    // 过滤验证码：如果有user_id（管理后台生成），则永久有效；否则检查过期时间
+    const validCodes = (verificationCodes || []).filter((vc: any) => {
+      if (vc.user_id) {
+        // 管理后台生成的验证码，永久有效
+        return true
+      } else {
+        // 普通验证码，检查是否过期
+        return new Date(vc.expires_at) > new Date()
+      }
+    })
 
     // 如果查询出错，记录错误信息
     if (codeError) {
@@ -44,7 +57,7 @@ export async function POST(request: NextRequest) {
     // 开发环境允许使用固定验证码 '1234' 或 '123456' 作为备用
     const isDevCode = process.env.NODE_ENV === 'development' && (code === '1234' || code === '123456')
 
-    const verificationCode = verificationCodes && verificationCodes.length > 0 ? verificationCodes[0] : null
+    const verificationCode = validCodes && validCodes.length > 0 ? validCodes[0] : null
 
     if (!verificationCode && !isDevCode) {
       return NextResponse.json(

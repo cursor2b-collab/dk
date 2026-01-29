@@ -29,11 +29,12 @@ export default function RepaymentPage() {
       const response = await fetch(`/api/get_user_data?phone=${encodeURIComponent(userInfo.phone)}`);
       const result = await response.json();
 
+      let userData = null;
       if (result.code === 200 && result.data) {
-        setLoanData(result.data);
+        userData = result.data;
       } else {
         // 如果获取失败，使用默认数据
-        setLoanData({
+        userData = {
           loanAmount: '0.00',
           paidAmount: '0.00',
           interestRate: '10.88%',
@@ -44,8 +45,29 @@ export default function RepaymentPage() {
           status: '正常',
           overdueAmount: '0.00',
           totalRepayment: '0.00'
-        });
+        };
       }
+
+      // 从数据库加载欢迎文本和周期文本
+      try {
+        // 加载欢迎文本
+        const welcomeTextResponse = await fetch('/api/get_welcome_text');
+        const welcomeTextResult = await welcomeTextResponse.json();
+        if (welcomeTextResult.code === 200 && welcomeTextResult.data?.welcome_text) {
+          userData.welcome_text = welcomeTextResult.data.welcome_text;
+        }
+
+        // 加载周期文本
+        const cycleTextResponse = await fetch('/api/get_cycle_text');
+        const cycleTextResult = await cycleTextResponse.json();
+        if (cycleTextResult.code === 200 && cycleTextResult.data?.cycle_text) {
+          userData.cycle = cycleTextResult.data.cycle_text;
+        }
+      } catch (e) {
+        console.error('加载文本配置失败:', e);
+      }
+
+      setLoanData(userData);
     } catch (error) {
       console.error('加载用户数据失败:', error);
       // 使用默认数据
@@ -59,7 +81,8 @@ export default function RepaymentPage() {
         totalInterest: '0.00',
         status: '正常',
         overdueAmount: '0.00',
-        totalRepayment: '0.00'
+        totalRepayment: '0.00',
+        welcome_text: '分期付 欢迎您'
       });
     } finally {
       setLoading(false);
@@ -88,7 +111,7 @@ export default function RepaymentPage() {
     <div className="min-h-screen bg-gray-100 flex flex-col max-w-[560px] mx-auto pb-24">
       {/* Main Card */}
       <div className="bg-white m-4 rounded-lg shadow-sm p-4">
-        <h2 className="mb-4">分期付 欢迎您</h2>
+        <h2 className="mb-4">{loanData.welcome_text || '分期付 欢迎您'}</h2>
         
         {/* Loan Details */}
         <div className="space-y-3">

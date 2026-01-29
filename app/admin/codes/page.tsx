@@ -78,6 +78,46 @@ export default function CodesPage() {
     }
   }
 
+  const handleUpdateCode = async (phone: string, customCodeValue?: string) => {
+    try {
+      const codeToUse = customCodeValue || ''
+      const response = await fetch(`/api/admin/codes/${encodeURIComponent(phone)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: codeToUse || undefined // 如果为空，让API自动生成
+        })
+      })
+
+      const result = await response.json()
+
+      if (result.code === 200) {
+        alert(`验证码更新成功！新验证码：${result.data.code}`)
+        loadCodes()
+      } else {
+        alert(result.msg || '更新失败')
+      }
+    } catch (error) {
+      console.error('更新验证码失败:', error)
+      alert('更新验证码失败')
+    }
+  }
+
+  const showUpdateDialog = (phone: string) => {
+    const newCode = prompt(`为手机号 ${phone} 更新验证码\n\n留空将自动生成6位随机验证码，或输入4-6位自定义验证码：`)
+    if (newCode !== null) {
+      if (newCode === '') {
+        // 自动生成
+        handleUpdateCode(phone)
+      } else if (/^\d{4,6}$/.test(newCode)) {
+        // 自定义验证码
+        handleUpdateCode(phone, newCode)
+      } else {
+        alert('验证码必须是4-6位数字')
+      }
+    }
+  }
+
   return (
     <div style={{ fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>
       {/* 操作栏 */}
@@ -190,18 +230,19 @@ export default function CodesPage() {
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>使用状态</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>过期时间</th>
               <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>创建时间</th>
+              <th style={{ padding: '12px', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>操作</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>
+                <td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>
                   加载中...
                 </td>
               </tr>
             ) : codes.length === 0 ? (
               <tr>
-                <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>
+                <td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>
                   暂无数据
                 </td>
               </tr>
@@ -254,6 +295,25 @@ export default function CodesPage() {
                   </td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{formatDate(code.expires_at)}</td>
                   <td style={{ padding: '12px', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif', fontWeight: 'bold' }}>{formatDate(code.created_at)}</td>
+                  <td style={{ padding: '12px' }}>
+                    <button
+                      onClick={() => showUpdateDialog(code.phone)}
+                      style={{
+                        padding: '6px 12px',
+                        background: '#667eea',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        color: '#ffffff',
+                        fontSize: '12px',
+                        fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif',
+                        fontWeight: 'bold'
+                      }}
+                      title="更新验证码"
+                    >
+                      更新
+                    </button>
+                  </td>
                 </tr>
               ))
             )}

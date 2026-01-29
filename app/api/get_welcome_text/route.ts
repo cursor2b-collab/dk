@@ -3,11 +3,11 @@ import { supabase } from '@/lib/supabase'
 
 export async function GET() {
   try {
-    // 从数据库获取网站名称配置
+    // 从数据库获取欢迎文本配置
     const { data, error } = await supabase
       .from('system_settings')
       .select('setting_value')
-      .eq('setting_key', 'site_name')
+      .eq('setting_key', 'welcome_text')
       .single()
 
     if (error || !data) {
@@ -15,32 +15,29 @@ export async function GET() {
       return NextResponse.json({
         code: 200,
         data: {
-          site_name: '好享贷'
+          welcome_text: '分期付 欢迎您'
         }
       })
     }
 
-    // 从JSONB中提取字符串值
-    // Supabase的JSONB字段返回时，字符串值会直接是字符串类型
-    const siteName = typeof data.setting_value === 'string' 
+    const welcomeText = typeof data.setting_value === 'string' 
       ? data.setting_value 
-      : '好享贷'
+      : '分期付 欢迎您'
 
     return NextResponse.json({
       code: 200,
       data: {
-        site_name: siteName
+        welcome_text: welcomeText
       }
     })
   } catch (error) {
-    console.error('Get site config error:', error)
+    console.error('Get welcome text error:', error)
     // 出错时返回默认值
     return NextResponse.json({
       code: 200,
       data: {
-        site_name: '好享贷'
+        welcome_text: '分期付 欢迎您'
       }
     })
   }
 }
-

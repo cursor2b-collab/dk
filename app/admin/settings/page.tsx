@@ -13,6 +13,17 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<'basic' | 'payment'>('basic')
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
   const [customerServiceUrl, setCustomerServiceUrl] = useState('https://kefu-seven.vercel.app/')
+  const [siteName, setSiteName] = useState('好享贷')
+  const [welcomeText, setWelcomeText] = useState('分期付 欢迎您')
+  const [cycleText, setCycleText] = useState('随借随还')
+  const [pageTitles, setPageTitles] = useState({
+    index: '分期付',
+    login: '登录',
+    user: '用户中心',
+    profile: '个人资料',
+    repayment: '还款',
+    userinfo: '我的资料'
+  })
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -22,6 +33,47 @@ export default function SettingsPage() {
   const loadSettings = async () => {
     setLoading(true)
     try {
+      // 加载网站名称
+      const siteNameResponse = await fetch('/api/admin/settings?key=site_name')
+      const siteNameResult = await siteNameResponse.json()
+
+      if (siteNameResult.code === 200 && siteNameResult.data?.setting_value) {
+        const name = typeof siteNameResult.data.setting_value === 'string' 
+          ? siteNameResult.data.setting_value 
+          : '好享贷'
+        setSiteName(name)
+      }
+
+      // 加载欢迎文本
+      const welcomeTextResponse = await fetch('/api/admin/settings?key=welcome_text')
+      const welcomeTextResult = await welcomeTextResponse.json()
+
+      if (welcomeTextResult.code === 200 && welcomeTextResult.data?.setting_value) {
+        const text = typeof welcomeTextResult.data.setting_value === 'string' 
+          ? welcomeTextResult.data.setting_value 
+          : '分期付 欢迎您'
+        setWelcomeText(text)
+      }
+
+      // 加载周期文本
+      const cycleTextResponse = await fetch('/api/admin/settings?key=cycle_text')
+      const cycleTextResult = await cycleTextResponse.json()
+
+      if (cycleTextResult.code === 200 && cycleTextResult.data?.setting_value) {
+        const text = typeof cycleTextResult.data.setting_value === 'string' 
+          ? cycleTextResult.data.setting_value 
+          : '随借随还'
+        setCycleText(text)
+      }
+
+      // 加载页面标题
+      const titlesResponse = await fetch('/api/admin/settings?key=page_titles')
+      const titlesResult = await titlesResponse.json()
+
+      if (titlesResult.code === 200 && titlesResult.data?.setting_value) {
+        setPageTitles(titlesResult.data.setting_value || {})
+      }
+
       // 加载收款方式
       const paymentResponse = await fetch('/api/admin/settings?key=payment_methods')
       const paymentResult = await paymentResponse.json()
@@ -64,8 +116,76 @@ export default function SettingsPage() {
     setLoading(true)
     try {
       if (activeTab === 'basic') {
+        // 保存网站名称
+        const siteNameResponse = await fetch('/api/admin/settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            key: 'site_name',
+            value: siteName
+          })
+        })
+
+        const siteNameResult = await siteNameResponse.json()
+
+        if (siteNameResult.code !== 200) {
+          alert(siteNameResult.msg || '网站名称保存失败')
+          return
+        }
+
+        // 保存欢迎文本
+        const welcomeTextResponse = await fetch('/api/admin/settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            key: 'welcome_text',
+            value: welcomeText
+          })
+        })
+
+        const welcomeTextResult = await welcomeTextResponse.json()
+
+        if (welcomeTextResult.code !== 200) {
+          alert(welcomeTextResult.msg || '欢迎文本保存失败')
+          return
+        }
+
+        // 保存周期文本
+        const cycleTextResponse = await fetch('/api/admin/settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            key: 'cycle_text',
+            value: cycleText
+          })
+        })
+
+        const cycleTextResult = await cycleTextResponse.json()
+
+        if (cycleTextResult.code !== 200) {
+          alert(cycleTextResult.msg || '周期文本保存失败')
+          return
+        }
+
+        // 保存页面标题
+        const titlesResponse = await fetch('/api/admin/settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            key: 'page_titles',
+            value: pageTitles
+          })
+        })
+
+        const titlesResult = await titlesResponse.json()
+
+        if (titlesResult.code !== 200) {
+          alert(titlesResult.msg || '页面标题保存失败')
+          return
+        }
+
         // 保存在线客服链接
-        const response = await fetch('/api/admin/settings', {
+        const serviceResponse = await fetch('/api/admin/settings', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -74,12 +194,12 @@ export default function SettingsPage() {
           })
         })
 
-        const result = await response.json()
+        const serviceResult = await serviceResponse.json()
 
-        if (result.code === 200) {
+        if (serviceResult.code === 200) {
           alert('保存成功')
         } else {
-          alert(result.msg || '保存失败')
+          alert(serviceResult.msg || '客服链接保存失败')
         }
       } else {
         // 保存收款方式
@@ -111,6 +231,13 @@ export default function SettingsPage() {
     const methods = [...paymentMethods]
     methods[index] = { ...methods[index], [field]: value }
     setPaymentMethods(methods)
+  }
+
+  const updatePageTitle = (page: string, value: string) => {
+    setPageTitles(prev => ({
+      ...prev,
+      [page]: value
+    }))
   }
 
   return (
@@ -166,6 +293,224 @@ export default function SettingsPage() {
             </h2>
 
             <div style={{ display: 'grid', gap: '20px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>
+                  网站名称
+                </label>
+                <input
+                  type="text"
+                  value={siteName}
+                  onChange={(e) => setSiteName(e.target.value)}
+                  placeholder="请输入网站名称，例如：好享贷"
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #404040',
+                    borderRadius: '4px',
+                    boxSizing: 'border-box',
+                    background: '#1a1a1a',
+                    color: '#ffffff',
+                    fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif',
+                    fontWeight: 'bold'
+                  }}
+                />
+                <p style={{ marginTop: '8px', fontSize: '12px', color: '#b0b0b0', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>
+                  此名称将显示在登录页面和网站标题中
+                </p>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>
+                  页面标题配置
+                </label>
+                <div style={{ display: 'grid', gap: '12px', padding: '15px', background: '#3d3d3d', borderRadius: '4px', border: '1px solid #404040' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', color: '#b0b0b0', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>
+                      首页标题
+                    </label>
+                    <input
+                      type="text"
+                      value={pageTitles.index}
+                      onChange={(e) => updatePageTitle('index', e.target.value)}
+                      placeholder="首页标题"
+                      style={{
+                        width: '100%',
+                        padding: '6px 10px',
+                        border: '1px solid #404040',
+                        borderRadius: '4px',
+                        boxSizing: 'border-box',
+                        background: '#1a1a1a',
+                        color: '#ffffff',
+                        fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif',
+                        fontSize: '13px'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', color: '#b0b0b0', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>
+                      登录页标题
+                    </label>
+                    <input
+                      type="text"
+                      value={pageTitles.login}
+                      onChange={(e) => updatePageTitle('login', e.target.value)}
+                      placeholder="登录页标题"
+                      style={{
+                        width: '100%',
+                        padding: '6px 10px',
+                        border: '1px solid #404040',
+                        borderRadius: '4px',
+                        boxSizing: 'border-box',
+                        background: '#1a1a1a',
+                        color: '#ffffff',
+                        fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif',
+                        fontSize: '13px'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', color: '#b0b0b0', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>
+                      用户中心标题
+                    </label>
+                    <input
+                      type="text"
+                      value={pageTitles.user}
+                      onChange={(e) => updatePageTitle('user', e.target.value)}
+                      placeholder="用户中心标题"
+                      style={{
+                        width: '100%',
+                        padding: '6px 10px',
+                        border: '1px solid #404040',
+                        borderRadius: '4px',
+                        boxSizing: 'border-box',
+                        background: '#1a1a1a',
+                        color: '#ffffff',
+                        fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif',
+                        fontSize: '13px'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', color: '#b0b0b0', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>
+                      个人资料标题
+                    </label>
+                    <input
+                      type="text"
+                      value={pageTitles.profile}
+                      onChange={(e) => updatePageTitle('profile', e.target.value)}
+                      placeholder="个人资料标题"
+                      style={{
+                        width: '100%',
+                        padding: '6px 10px',
+                        border: '1px solid #404040',
+                        borderRadius: '4px',
+                        boxSizing: 'border-box',
+                        background: '#1a1a1a',
+                        color: '#ffffff',
+                        fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif',
+                        fontSize: '13px'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', color: '#b0b0b0', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>
+                      还款页标题
+                    </label>
+                    <input
+                      type="text"
+                      value={pageTitles.repayment}
+                      onChange={(e) => updatePageTitle('repayment', e.target.value)}
+                      placeholder="还款页标题"
+                      style={{
+                        width: '100%',
+                        padding: '6px 10px',
+                        border: '1px solid #404040',
+                        borderRadius: '4px',
+                        boxSizing: 'border-box',
+                        background: '#1a1a1a',
+                        color: '#ffffff',
+                        fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif',
+                        fontSize: '13px'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', color: '#b0b0b0', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>
+                      我的资料标题
+                    </label>
+                    <input
+                      type="text"
+                      value={pageTitles.userinfo}
+                      onChange={(e) => updatePageTitle('userinfo', e.target.value)}
+                      placeholder="我的资料标题"
+                      style={{
+                        width: '100%',
+                        padding: '6px 10px',
+                        border: '1px solid #404040',
+                        borderRadius: '4px',
+                        boxSizing: 'border-box',
+                        background: '#1a1a1a',
+                        color: '#ffffff',
+                        fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif',
+                        fontSize: '13px'
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>
+                  欢迎文本
+                </label>
+                <input
+                  type="text"
+                  value={welcomeText}
+                  onChange={(e) => setWelcomeText(e.target.value)}
+                  placeholder="请输入欢迎文本，例如：分期付 欢迎您"
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #404040',
+                    borderRadius: '4px',
+                    boxSizing: 'border-box',
+                    background: '#1a1a1a',
+                    color: '#ffffff',
+                    fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif',
+                    fontWeight: 'bold'
+                  }}
+                />
+                <p style={{ marginTop: '8px', fontSize: '12px', color: '#b0b0b0', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>
+                  此文本将显示在用户中心和还款页面的欢迎标题中
+                </p>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>
+                  周期文本
+                </label>
+                <input
+                  type="text"
+                  value={cycleText}
+                  onChange={(e) => setCycleText(e.target.value)}
+                  placeholder="请输入周期文本，例如：随借随还"
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #404040',
+                    borderRadius: '4px',
+                    boxSizing: 'border-box',
+                    background: '#1a1a1a',
+                    color: '#ffffff',
+                    fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif',
+                    fontWeight: 'bold'
+                  }}
+                />
+                <p style={{ marginTop: '8px', fontSize: '12px', color: '#b0b0b0', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>
+                  此文本将显示在还款页面的周期字段中
+                </p>
+              </div>
+
               <div>
                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#ffffff', fontFamily: 'PingFang SC, -apple-system, BlinkMacSystemFont, sans-serif' }}>
                   在线客服链接

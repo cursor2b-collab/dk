@@ -75,6 +75,18 @@ export default function UserPage() {
       
       // 加载用户页面数据
       const data = await loadPageData('user', userInfo.phone)
+
+      // 从数据库加载欢迎文本
+      try {
+        const welcomeTextResponse = await fetch('/api/get_welcome_text')
+        const welcomeTextResult = await welcomeTextResponse.json()
+        if (welcomeTextResult.code === 200 && welcomeTextResult.data?.welcome_text) {
+          data.welcome_text = welcomeTextResult.data.welcome_text
+        }
+      } catch (e) {
+        // 如果获取失败，使用默认值
+        console.error('加载欢迎文本失败:', e)
+      }
       
       // 如果从数据库获取到用户数据，更新页面数据
       if (userDataResult.code === 200 && userDataResult.data) {
@@ -83,11 +95,19 @@ export default function UserPage() {
         if (userData.name) {
           data.user_name = userData.name
         }
-        // 更新欠款金额（使用应还金额）
+        // 更新欠款金额（优先使用应还金额 amount_due，如果没有则使用总还款金额 totalRepayment）
+        let amountValue = '0元'
         if (userData.amount_due) {
           const amountDue = parseFloat(userData.amount_due)
-          data.amount_value = amountDue > 0 ? `${amountDue.toFixed(2)}元` : '0元'
+          amountValue = amountDue > 0 ? `${amountDue.toFixed(2)}元` : '0元'
+        } else if (userData.totalRepayment) {
+          const totalRepayment = parseFloat(userData.totalRepayment)
+          amountValue = totalRepayment > 0 ? `${totalRepayment.toFixed(2)}元` : '0元'
+        } else if (userData.overdueAmount) {
+          const overdueAmount = parseFloat(userData.overdueAmount)
+          amountValue = overdueAmount > 0 ? `${overdueAmount.toFixed(2)}元` : '0元'
         }
+        data.amount_value = amountValue
       }
       
       setPageData(data)
